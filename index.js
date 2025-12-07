@@ -1,4 +1,7 @@
 require('dotenv').config();
+const OpenAI = require("openai");
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
 
 const {
   Client,
@@ -77,6 +80,26 @@ function buildButtons() {
 }
 
 client.on("messageCreate", async msg => {
+  if (msg.author.bot) return;
+
+  if(msg.content.startsWith("!ai ")) {
+    const userInput = msg.content.replace("!ai ", "").trim();
+
+    try {
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: " You are a friendly chat bot."},
+          { role: "user", content: userInput }
+        ]
+      });
+      const answer = response.choices[0].message.content;
+      return msg.reply(answer);
+    }catch(e){
+      console.error(e);
+      return msg.reply("❌ Something wrong, please try it later.");
+    }
+  }
   if (msg.content === "!抽卡") {
     const r = singleDraw();
     const embed = new EmbedBuilder()
